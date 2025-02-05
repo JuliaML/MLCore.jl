@@ -9,7 +9,7 @@ such as [MLUtils.jl](https://github.com/JuliaML/MLUtils.jl).
 Defines the following methods:
 - `numobs(x)`
 - `getobs(data, idx)`, `getobs(data, idxs)`, and `getobs(data)`
-- `getobs!(buffer, data, i)`
+- `getobs!(buffer, data, idx)`
 
 It also provides implementations for Base types such as arrays, tuples, named tuples, and dictionaries
 Also provides implementations for `Tables.jl` tables.
