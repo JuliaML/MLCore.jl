@@ -226,19 +226,20 @@ end
 
 numobs(data::Dict) = _check_numobs(data)
 
-# The value type `V2` is computed explicitly so that the returned `Dict` is
-# type-stable. A plain `Dict(generator)` comprehension infers poorly when the
-# observations have heterogeneous types (e.g. `Dict{String, Array}`), returning
-# `Union{Dict{Any,Any}, Dict{String}}` instead of `Dict{String, Any}`.
-function getobs(data::Dict{K,V}, i) where {K,V}
-    V2 = Base.promote_op(getobs, V, typeof(i))
-    return Dict{K,V2}(k => getobs(v, i) for (k, v) in pairs(data))
-end
+# We build the result with a `Dict(generator)` comprehension, which keeps the
+# value type as narrow as the actual observations: a homogeneous dict like
+# `Dict{Symbol, Matrix{Float64}}` stays precise (and inferrable), and a batch of
+# a heterogeneous-but-abstract dict like `Dict{String, Array{Float64}}` is kept
+# at `Dict{String, Array{Float64}}` rather than widened to `Dict{String, Any}`.
+#
+# For a genuinely heterogeneous dict the comprehension is not type-stable (it
+# infers as `Union{Dict{Any,Any}, Dict{String}}`), but that is unavoidable: a
+# stable result would have to widen the value type all the way to `Any` — which
+# loses the narrow type without buying any usable static information, since the
+# values are `Any` either way. We prefer the narrow type.
+getobs(data::Dict, i) = Dict(k => getobs(v, i) for (k, v) in pairs(data))
 
-function getobs(data::Dict{K,V}) where {K,V}
-    V2 = Base.promote_op(getobs, V)
-    return Dict{K,V2}(k => getobs(v) for (k, v) in pairs(data))
-end
+getobs(data::Dict) = Dict(k => getobs(v) for (k, v) in pairs(data))
 
 function getobs!(buffers, data::Dict, i)
     for (k, v) in pairs(data)
