@@ -61,14 +61,17 @@ end
     dataset = Dict("X" => X, "y" => y) 
     @test numobs(dataset) == 15
 
-    @test_broken @inferred getobs(dataset, 2) # not inferred
-    o = getobs(dataset, 2)
+    o = @inferred getobs(dataset, 2)
     @test o["X"] == X[:,2]
     @test o["y"] == y[2]
 
-    o = getobs(dataset, 1:2)
+    o = @inferred getobs(dataset, 1:2)
     @test o["X"] == X[:,1:2]
     @test o["y"] == y[1:2]
+
+    # a homogeneous dict keeps a precise (non-`Any`) value type
+    hdata = Dict(:a => rand(2, 3), :b => rand(2, 3))
+    @test @inferred(getobs(hdata, 2)) isa Dict{Symbol, Vector{Float64}}
 end
 
 @testset "numobs" begin
