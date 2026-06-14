@@ -226,9 +226,19 @@ end
 
 numobs(data::Dict) = _check_numobs(data)
 
-getobs(data::Dict, i) = Dict(k => getobs(v, i) for (k, v) in pairs(data))
+# The value type `V2` is computed explicitly so that the returned `Dict` is
+# type-stable. A plain `Dict(generator)` comprehension infers poorly when the
+# observations have heterogeneous types (e.g. `Dict{String, Array}`), returning
+# `Union{Dict{Any,Any}, Dict{String}}` instead of `Dict{String, Any}`.
+function getobs(data::Dict{K,V}, i) where {K,V}
+    V2 = Base.promote_op(getobs, V, typeof(i))
+    return Dict{K,V2}(k => getobs(v, i) for (k, v) in pairs(data))
+end
 
-getobs(data::Dict) = Dict(k => getobs(v) for (k, v) in pairs(data))
+function getobs(data::Dict{K,V}) where {K,V}
+    V2 = Base.promote_op(getobs, V)
+    return Dict{K,V2}(k => getobs(v) for (k, v) in pairs(data))
+end
 
 function getobs!(buffers, data::Dict, i)
     for (k, v) in pairs(data)
