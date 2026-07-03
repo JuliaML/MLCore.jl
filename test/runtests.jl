@@ -9,4 +9,7 @@ using DataFrames
     @testset "observation" begin
         include("observation.jl")
     end
+    @testset "PythonCall extension" begin
+        include("pythoncall.jl")
+    end
 end
